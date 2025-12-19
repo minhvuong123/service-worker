@@ -49,80 +49,112 @@
 // cache.match(Request, options).then((cacheRespone) => {});
 // cache.matchAll(Request, options).then((cachesRespone) => {});
 // cache.put(Request, options).then(() => {});
+// const APP = {
+//   SW: null,
+//   cacheName: 'assetCache1',
+//   init() {
+   
+//     APP.startCaching();
+
+//     document.querySelector('header>h2').addEventListener('click', APP.deleteCache);
+//   },
+//   startCaching() {
+//     return caches.open(APP.cacheName).then((cache) => {
+//       console.log(`Cache ${APP.cacheName} opened`);
+
+//       let urlString = '/image/corgi.jpg?id=one';
+//       cache.add(urlString);
+
+//       let url = new URL('http://127.0.0.1:8080/image/corgi.jpg?id=two');
+//       cache.add(url);
+
+//       let req = new Request('/image/corgi.jpg?id=three');
+//       cache.add(req);
+
+//       cache.keys().then(keys => {
+//         keys.forEach((key, index) => {
+//           console.log(index, key);
+//         })
+//       });
+
+//       return cache;
+//     }).then((cache) => {
+//       // check if a cache exists
+//       caches.has(APP.cacheName).then(hasCache => {
+//         console.log(`${APP.cacheName} ${hasCache}`)
+//       })
+
+//       //search for files in caches
+//       let urlString = '/image/corgi.jpg?id=one';
+//       return caches.match(urlString).then((cacheResponse) => {
+//         if (
+//           cacheResponse && 
+//           cacheResponse.status < 400 && 
+//           cacheResponse.headers.has('content-type') &&
+//           cacheResponse.headers.has('content-type').match(/^image\//i) 
+//         ) {
+//           console.log('Found in the cache');
+//           return cacheResponse;
+//         } else {
+//           // no match found
+//           console.log('not found in the cache');
+//           return fetch(urlString).then((fetchResponse) => {
+//             if (!fetchResponse.ok) {
+//               throw fetchResponse.statusText;
+//             }
+//             cache.put(urlString, fetchResponse.clone())
+//             return fetchResponse;
+//           })
+//         }
+//       })
+//     }).then(response => {
+//       console.log(response);
+//     });
+//   },
+//   deleteCache() {
+//     caches.open(APP.cacheName).then(cache => {
+//       let url = '/image/corgi.jpg?id=one';
+
+//       cache.delete(url).then(isGone => {
+//         console.log(isGone)
+//       });
+
+//        cache.delete(APP.cacheName).then(isGone => {
+//         console.log(isGone)
+//       });
+//     })
+//   }
+// }
+
+// document.addEventListener('DOMContentLoaded', APP.init);
+
 const APP = {
   SW: null,
-  cacheName: 'assetCache1',
   init() {
    
-    APP.startCaching();
+    APP.registerSW();
 
-    document.querySelector('header>h2').addEventListener('click', APP.deleteCache);
+    document.querySelector('header>h2').addEventListener('click', APP.addImage);
   },
-  startCaching() {
-    return caches.open(APP.cacheName).then((cache) => {
-      console.log(`Cache ${APP.cacheName} opened`);
-
-      let urlString = '/image/corgi.jpg?id=one';
-      cache.add(urlString);
-
-      let url = new URL('http://127.0.0.1:8080/image/corgi.jpg?id=two');
-      cache.add(url);
-
-      let req = new Request('/image/corgi.jpg?id=three');
-      cache.add(req);
-
-      cache.keys().then(keys => {
-        keys.forEach((key, index) => {
-          console.log(index, key);
-        })
-      });
-
-      return cache;
-    }).then((cache) => {
-      // check if a cache exists
-      caches.has(APP.cacheName).then(hasCache => {
-        console.log(`${APP.cacheName} ${hasCache}`)
-      })
-
-      //search for files in caches
-      let urlString = '/image/corgi.jpg?id=one';
-      return caches.match(urlString).then((cacheResponse) => {
-        if (
-          cacheResponse && 
-          cacheResponse.status < 400 && 
-          cacheResponse.headers.has('content-type') &&
-          cacheResponse.headers.has('content-type').match(/^image\//i) 
-        ) {
-          console.log('Found in the cache');
-          return cacheResponse;
-        } else {
-          // no match found
-          console.log('not found in the cache');
-          return fetch(urlString).then((fetchResponse) => {
-            if (!fetchResponse.ok) {
-              throw fetchResponse.statusText;
-            }
-            cache.put(urlString, fetchResponse.clone())
-            return fetchResponse;
-          })
+  registerSW() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      }).then(
+        (registration) => {
+          APP.SW = registration.installing || registration.waiting || registration.active;
+          console.log('Service worker registered.');
+        },
+        (error) => {
+          console.log('Service workers registration failed.')
         }
-      })
-    }).then(response => {
-      console.log(response);
-    });
+      )
+    } else {
+      console.log('Service workers are not supported.')
+    }
   },
-  deleteCache() {
-    caches.open(APP.cacheName).then(cache => {
-      let url = '/image/corgi.jpg?id=one';
+  addImage() {
 
-      cache.delete(url).then(isGone => {
-        console.log(isGone)
-      });
-
-       cache.delete(APP.cacheName).then(isGone => {
-        console.log(isGone)
-      });
-    })
   }
 }
 
